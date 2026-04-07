@@ -16,5 +16,5 @@ jobs:
     - name: Deploy to Astro
       uses: astronomer/deploy-action@v0.12.0
       with:
-        deployment-id: 1234asdf
+        deployment-id: astrolab
         parse: true
