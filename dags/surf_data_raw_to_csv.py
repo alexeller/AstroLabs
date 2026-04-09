@@ -232,7 +232,7 @@ CSV_PREFIX = os.environ.get("SURF_DATA_CSV_PREFIX", "data/surf_data_csv").strip(
 
 @dag(
     start_date=pdatetime(2025, 4, 22),
-    schedule=None,
+    schedule='15 * * * *',
     catchup=False,
     default_args={"owner": "Astro", "retries": 2, "retry_delay": timedelta(minutes=1)},
     tags=["s3", "surf", "csv"],
