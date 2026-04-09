@@ -47,7 +47,7 @@ def _poi_slug(value: str) -> str:
 
 @dag(
     start_date=datetime(2025, 4, 22),
-    schedule=None,
+    schedule='5 * * * *',
     catchup=False,
     default_args={"owner": "Astro", "retries": 2, 'retry_delay': timedelta(minutes=1)},
     tags=["s3", "weather", "marine", "surf"],
@@ -81,11 +81,18 @@ def surf_data_to_s3():
 
         for location in locations:
             poi_slug = _poi_slug(location)
-            key = f"data/surf_data_raw/{poi_slug}/{run_date}.json"
+            key_base = f"data/surf_data_raw/{poi_slug}/{run_date}.json"
+            key_ready = key_base + ".ready"
 
-            obj: Any = s3.get_key(key=key, bucket_name=S3_BUCKET)
+            # Operator writes `.json.ready`; accept `.json` as a backward-compatible fallback.
+            obj: Any = s3.get_key(key=key_ready, bucket_name=S3_BUCKET)
+            key = key_ready
             if obj is None:
-                missing.append(f"s3://{S3_BUCKET}/{key}")
+                obj = s3.get_key(key=key_base, bucket_name=S3_BUCKET)
+                key = key_base
+
+            if obj is None:
+                missing.append(f"s3://{S3_BUCKET}/{key_ready}")
                 continue
 
             # `content_length` is present on boto3's ObjectSummary; be defensive.
