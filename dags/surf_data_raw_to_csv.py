@@ -337,7 +337,7 @@ def surf_data_raw_to_csv():
         payload["processed_raw_keys"] = moved
         return payload
 
-    @task
+    @task(queue="dbt")
     def delete_old_raw_files() -> int:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         deleted = 0

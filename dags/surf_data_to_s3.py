@@ -148,6 +148,7 @@ def surf_data_to_s3():
         s3_prefix="data/surf_data_raw",
         aws_conn_id=AWS_CONN_ID,
         run_date=run_date,
+        queue="dbt"
     )
 
     validate_task = validate_published(
