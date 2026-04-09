@@ -94,8 +94,8 @@ def _is_candidate_ready_key(key: str) -> bool:
         return False
     if ".processed" in key:
         return False
-    # Expected: <ts>.json.ready; compat: <ts>.json
-    return key.endswith(".json.ready") or key.endswith(".json")
+    # Only process marker-style raw files.
+    return key.endswith(".json.ready")
 
 
 def _split_raw_key(key: str, raw_prefix: str) -> tuple[str, str] | None:
@@ -128,8 +128,8 @@ def _find_complete_ready_batch(
 ) -> ReadyBatch | None:
     """Find a timestamp for which we have `expected_poi_count` ready objects.
 
-    We count distinct POI subfolders for each timestamp and return the *oldest*
-    complete timestamp to keep processing order stable.
+    We count distinct POI subfolders for each timestamp and return the *latest*
+    complete timestamp.
     """
 
     keys = s3.list_keys(bucket_name=bucket, prefix=raw_prefix.strip("/") + "/") or []
@@ -156,7 +156,7 @@ def _find_complete_ready_batch(
     if not complete_ts:
         return None
 
-    chosen = sorted(complete_ts)[0]
+    chosen = sorted(complete_ts)[-1]
     by_poi = grouped[chosen]
 
     # Deterministic order in XCom payload.
