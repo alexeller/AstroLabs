@@ -56,15 +56,15 @@ def _poi_slug(value: str) -> str:
 def surf_data_to_s3():
     @task
     def build_run_date() -> str:
-        """Return an hourly run key derived from this DAG run's logical_date in UTC."""
+        """Return an hourly run key derived from this DAG run's logical_date in EST."""
         try:
             from airflow.decorators import get_current_context
         except Exception:  # pragma: no cover
             from airflow.operators.python import get_current_context
 
         context = get_current_context()
-        logical_date_utc = context["logical_date"].in_timezone("UTC")
-        return logical_date_utc.strftime("%Y%m%d%H")
+        logical_date_est = context["logical_date"].in_timezone("EST")
+        return logical_date_est.strftime("%Y%m%d%H")
 
     @task
     def validate_published(

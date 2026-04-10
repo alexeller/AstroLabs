@@ -14,12 +14,6 @@ Outputs are written to a parallel prefix:
 
     s3://<bucket>/<CSV_PREFIX>/<RUN_TIMESTAMP>.csv.ready
 
-Compatibility
--------------
-Some earlier/raw datasets may have keys ending in `.json` (no `.ready`). This
-DAG treats `<ts>.json` as a ready input as well, but the normal/expected format
-is `<ts>.json.ready`.
-
 Notes
 -----
 - Timestamp parsing is based on a numeric token embedded in the filename.
@@ -45,7 +39,7 @@ from airflow.sensors.base import PokeReturnValue
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from pendulum import datetime as pdatetime
 
-try:  # Airflow 2.9+ (standard provider)
+try:
     from airflow.providers.standard.sensors.python import PythonSensor
 except Exception:  # pragma: no cover
     from airflow.sensors.python import PythonSensor
@@ -159,7 +153,6 @@ def _find_complete_ready_batch(
     chosen = sorted(complete_ts)[-1]
     by_poi = grouped[chosen]
 
-    # Deterministic order in XCom payload.
     raw_keys = [by_poi[poi] for poi in sorted(by_poi.keys())[:expected_poi_count]]
     return ReadyBatch(timestamp=chosen, raw_keys=raw_keys)
 
@@ -272,7 +265,6 @@ def surf_data_raw_to_csv():
 
         # Validate the timestamp early.
         _parse_timestamp_utc(ts)
-        # Per requirement: set retrieved_at_utc equal to the timestamp in the filename.
         retrieved_at_utc = ts
 
         s3 = S3Hook(aws_conn_id=AWS_CONN_ID)
@@ -299,9 +291,6 @@ def surf_data_raw_to_csv():
         )
         writer.writeheader()
         writer.writerows(rows)
-
-#        S3_BUCKET = "sfquickstarts"
-#        out_key = "tasty-bytes-builder-education/raw_pos/surfing" + out_key
 
         s3.load_string(
             string_data=buf.getvalue(),
