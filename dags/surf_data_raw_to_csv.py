@@ -38,6 +38,7 @@ from airflow.sdk import dag, task
 from airflow.sensors.base import PokeReturnValue
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from pendulum import datetime as pdatetime
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 try:
     from airflow.providers.standard.sensors.python import PythonSensor
@@ -218,6 +219,7 @@ EXPECTED_POI_COUNT = int(os.environ.get("SURF_EXPECTED_FILES", "4"))
 
 S3_BUCKET = os.environ.get("S3_BUCKET", "astrolabs-634236767178-us-east-1-an")
 AWS_CONN_ID = os.environ.get("AWS_CONN_ID", "astro_s3_conn")
+SNOWFLAKE_CONN_ID = os.environ.get("SNOWFLAKE_CONN_ID", "astrosnowflake")
 
 RAW_PREFIX = os.environ.get("SURF_DATA_RAW_PREFIX", "data/surf_data_raw").strip("/")
 CSV_PREFIX = os.environ.get("SURF_DATA_CSV_PREFIX", "data/surf_data_csv").strip("/")
@@ -363,7 +365,13 @@ def surf_data_raw_to_csv():
     processed = mark_raw_processed(extracted)
     cleaned = delete_old_raw_files()
 
-    poll_for_ready_batch >> extracted >> processed >> cleaned
+    update_snowflake = SQLExecuteQueryOperator(
+        task_id="run_snowflake_query",
+        conn_id=SNOWFLAKE_CONN_ID,
+        sql="ALTER EXTERNAL TABLE tasty_bytes.raw_pos.surfing REFRESH;"
+    )
+
+    poll_for_ready_batch >> extracted >> processed >> cleaned >> update_snowflake
 
 
 surf_data_raw_to_csv()

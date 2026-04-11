@@ -22,9 +22,11 @@ def test_surf_data_raw_to_csv_dag_loads_and_has_expected_tasks():
         "extract_to_csv",
         "mark_raw_processed",
         "delete_old_raw_files",
+        "run_snowflake_query",
     }
 
-    # Basic dependency chain: poll -> extract -> mark -> delete
+    # Basic dependency chain: poll -> extract -> mark -> delete -> snowflake
     assert dag.get_task("extract_to_csv").upstream_task_ids == {"poll_for_ready_batch"}
     assert dag.get_task("mark_raw_processed").upstream_task_ids == {"extract_to_csv"}
     assert dag.get_task("delete_old_raw_files").upstream_task_ids == {"mark_raw_processed"}
+    assert dag.get_task("run_snowflake_query").upstream_task_ids == {"delete_old_raw_files"}

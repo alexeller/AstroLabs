@@ -27,7 +27,6 @@ from pendulum import datetime
 
 from plugins.operators.open_meteo_surf_operator import OpenMeteoSurfDataToS3Operator
 
-
 S3_BUCKET = os.environ.get("S3_BUCKET", "astrolabs-634236767178-us-east-1-an")
 AWS_CONN_ID = os.environ.get("AWS_CONN_ID", "astro_s3_conn")
 
