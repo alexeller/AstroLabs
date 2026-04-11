@@ -10,7 +10,13 @@ def choose_branch() -> str:
     i = random.randint(1, 10)
     return f"dataset{i}_task"
 
-@dag(start_date=datetime(2024, 1, 1), schedule=None)
+@dag(
+    start_date=datetime(2024, 1, 1),
+    schedule=None,
+    catchup=False,
+    default_args={"retries": 2},
+    tags=["example"],
+)
 def mapping_dag():
 
     branch_task = BranchPythonOperator(

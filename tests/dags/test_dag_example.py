@@ -3,8 +3,24 @@
 import os
 import logging
 from contextlib import contextmanager
+from pathlib import Path
 import pytest
 from airflow.models import DagBag
+
+
+def _repo_dags_dir() -> Path:
+    # tests/dags/test_dag_example.py -> repo_root/dags
+    repo_root = Path(__file__).resolve().parents[2]
+    return repo_root / "dags"
+
+
+def _strip_path_prefix(path: str) -> str:
+    # Prefer making paths relative to this repo; fall back to AIRFLOW_HOME.
+    dags_dir = _repo_dags_dir()
+    try:
+        return os.path.relpath(path, str(dags_dir.parent))
+    except Exception:
+        return os.path.relpath(path, os.environ.get("AIRFLOW_HOME") or os.getcwd())
 
 
 @contextmanager
@@ -23,14 +39,11 @@ def get_import_errors():
     Generate a tuple for import errors in the dag bag
     """
     with suppress_logging("airflow"):
-        dag_bag = DagBag(include_examples=False)
-
-        def strip_path_prefix(path):
-            return os.path.relpath(path, os.environ.get("AIRFLOW_HOME"))
+        dag_bag = DagBag(dag_folder=str(_repo_dags_dir()), include_examples=False)
 
         # prepend "(None,None)" to ensure that a test object is always created even if it's a no op.
         return [(None, None)] + [
-            (strip_path_prefix(k), v.strip()) for k, v in dag_bag.import_errors.items()
+            (_strip_path_prefix(k), v.strip()) for k, v in dag_bag.import_errors.items()
         ]
 
 
@@ -39,12 +52,9 @@ def get_dags():
     Generate a tuple of dag_id, <DAG objects> in the DagBag
     """
     with suppress_logging("airflow"):
-        dag_bag = DagBag(include_examples=False)
+        dag_bag = DagBag(dag_folder=str(_repo_dags_dir()), include_examples=False)
 
-    def strip_path_prefix(path):
-        return os.path.relpath(path, os.environ.get("AIRFLOW_HOME"))
-
-    return [(k, v, strip_path_prefix(v.fileloc)) for k, v in dag_bag.dags.items()]
+    return [(k, v, _strip_path_prefix(v.fileloc)) for k, v in dag_bag.dags.items()]
 
 
 @pytest.mark.parametrize(
