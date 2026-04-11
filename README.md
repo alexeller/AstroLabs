@@ -1,3 +1,15 @@
+Project Info:
+This project contains three dags for the Astronomer Lab project.
+Dag 1 is the surf_data_to_s3 dag.  It pulls the current conditions data for four local surfing and wind sport locations from a public weather api in parallel with a custom operator, and then validates that four data files were retrieved.
+Dag 2 is the surf_data_raw_to_csv. It aggregates one hour periods data across the four locations and stores it as a csv file for a given date_hour.  It then marks the consumed files as .processed, and deletes the raw source data that is older than one day ago.
+Dag 3 is the "crazy" dag, a hypothetical dag utilizing many datasources, forking parallel processing, and branching to make a very unpleasant process to follow.
+
+
+
+
+
+Astronomer Info:
+
 Overview
 ========
 
